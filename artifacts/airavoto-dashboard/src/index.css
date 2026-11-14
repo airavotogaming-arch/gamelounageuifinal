@@ -131,8 +131,8 @@ button { color: inherit; }
 .performer.three{background:radial-gradient(circle at 45% 18%,#ffbad0,#743caa 50%,#181d47)}
 .all-games{grid-column:1 / 3;grid-row:3;position:relative;top:1.2vh;height:calc(100% - 1.6vh);width:103%;display:flex;flex-direction:column;padding:9px 11px;min-height:0}
 .game-grid{display:grid;grid-template-columns:repeat(6,1fr);grid-template-rows:repeat(2,1fr);gap:5px;margin-top:6px;flex:1;min-height:0}
-.game-tile{border:1px solid #d2e2ff2a;background:rgba(15,29,71,.62);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px;min-width:0;overflow:hidden}
-.game-symbol{width:28px;height:28px;flex:none;border-radius:7px;background-color:#253968;background-size:cover;background-position:center;display:block}
+.game-tile{border:1px solid #d2e2ff2a;background:rgba(15,29,71,.62);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding:0;min-width:0;overflow:hidden}
+.game-symbol{width:24px;height:24px;flex:none;border-radius:7px;background-color:#253968;background-size:cover;background-position:center;display:block}
 .game-name{font-size:7px;line-height:1.05;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
 .popular{grid-column:1 / 3;grid-row:3 / 4;display:none}
 .popular-card{grid-column:3;grid-row:3;position:relative;top:1.2vh;height:calc(100% - 1.6vh);width:116%;display:flex;flex-direction:column;padding:9px 10px;min-height:0}
@@ -140,7 +140,7 @@ button { color: inherit; }
 .popular-game img{width:100%;height:43px;object-fit:cover;border:1px solid #d7dffb6b;border-radius:7px}
 .food-card{grid-column:4;grid-row:3;position:relative;top:1.2vh;height:calc(100% - 1.6vh);width:90%;justify-self:end;display:flex;flex-direction:column;padding:9px 10px;overflow:hidden;background:linear-gradient(115deg,#35477fc9,#481b7bd9)}
 .food-row{display:flex;align-items:center;gap:6px;flex:1}
-.burger-art{width:45%;height:55px;flex:none;background:url('/artwork/burger.png') center / contain no-repeat;filter:drop-shadow(0 4px 3px #131430)}
+.burger-art{width:44%;height:68px;flex:none;background:url('/artwork/burger.png') center / contain no-repeat;filter:drop-shadow(0 4px 3px #131430)}
 .food-copy{font-size:9px;z-index:1}
 .food-copy strong{font-size:12px;display:block}
 .food-price{color:#df7cff;font-size:20px;font-family:var(--app-font-mono);font-weight:800}
@@ -169,15 +169,15 @@ button:focus-visible,input:focus-visible{outline:2px solid #e9a9ff;outline-offse
 }
 @media(max-width:760px) {
  body{overflow:auto}
- .launcher{height:auto;min-height:100dvh;background-size:auto 100dvh;background-position:center top}
+  .launcher{height:auto;min-height:100dvh;background-size:auto 210dvh;background-position:center top;background-repeat:no-repeat;background-color:#5a95c8}
  .dashboard{position:relative;inset:auto;min-width:0;min-height:100dvh;padding:12px;display:flex;flex-direction:column;gap:10px}
- .topbar{flex-wrap:wrap;padding:0;gap:8px}.brand{width:auto;min-width:130px}.searchbox{order:3;max-width:none;flex-basis:100%}.top-actions{margin-left:auto}
+  .topbar{order:0;flex-wrap:wrap;padding:0;gap:8px}.brand{width:auto;min-width:130px}.searchbox{order:3;max-width:none;flex-basis:100%}.top-actions{margin-left:auto}
  .top-actions .pill-btn{height:31px;padding:0 8px}.profile-name{display:none}
- .sidebar{order:2;margin:0;flex-direction:row;justify-content:space-around;padding:5px;border-radius:16px;gap:0}
+  .sidebar{order:1;margin:0;flex-direction:row;justify-content:space-around;padding:5px;border-radius:16px;gap:0}
  .nav-spacer{display:none}.nav-icon{width:32px;height:32px}
-  .main-grid{display:flex;flex-direction:column;gap:10px;margin-right:0}
-  .feature{min-height:205px;width:100%}.session{min-height:100px}.ad-card{min-height:110px}
- .week-card,.stats-card{min-height:112px}.perform-card{min-height:110px}.all-games{min-height:180px}.game-grid{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr)}
- .food-card{min-height:110px}.quick-actions{min-height:68px;flex-wrap:wrap}.discount{min-height:82px}
+  .main-grid{order:2;display:flex;flex-direction:column;gap:10px;margin-right:0}
+  .feature{min-height:205px;width:100%;top:0;height:auto}.session{min-height:100px;height:auto;align-self:stretch}.ad-card{min-height:110px;height:auto;margin:0;align-self:stretch}
+  .week-card,.stats-card{min-height:112px;top:0;height:auto;width:100%}.perform-card{min-height:110px;top:0;height:auto}.all-games{min-height:180px;top:0;height:auto;width:100%}.game-grid{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr)}
+  .popular-card{top:0;height:auto;width:100%}.food-card{min-height:110px;top:0;height:auto;width:100%}.quick-actions{min-height:68px;flex-wrap:wrap;width:100%}.discount{min-height:82px;width:100%}
  .launcher{padding-bottom:30px}
 }
