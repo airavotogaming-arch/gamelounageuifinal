@@ -17,37 +17,88 @@ import {
   Router as WouterRouter,
 } from 'wouter';
 import wallpaper from '@assets/image_1794675192538.png';
+import SecondaryPage, {
+  type LauncherGame,
+  type LauncherPage,
+} from '@/components/launcher/SecondaryPage';
 
 const queryClient = new QueryClient();
 
+const NAV_ITEMS = [
+  { label: 'Home', path: '/', icon: HomeIcon },
+  { label: 'Games', path: '/games', icon: Gamepad2 },
+  { label: 'Discover', path: '/discover', icon: Compass },
+  { label: 'Activity', path: '/activity', icon: Activity },
+  { label: 'Calendar', path: '/calendar', icon: CalendarDays },
+  { label: 'Rewards', path: '/rewards', icon: Gift },
+  { label: 'Settings', path: '/settings', icon: Settings },
+  { label: 'Support', path: '/support', icon: Headphones },
+  { label: 'Add library', path: '/add-library', icon: Plus },
+] as const;
+
+const DEFAULT_GAMES: LauncherGame[] = [
+  { name: 'Valorant', art: '/artwork/game-valorant.png' },
+  { name: 'GTA V', art: '/artwork/game-gta.png' },
+  { name: 'Fortnite', art: '/artwork/game-fortnite.png' },
+  { name: 'Minecraft', art: '/artwork/game-minecraft.png' },
+  { name: 'Call of Duty', art: '/artwork/game-cod.png' },
+  { name: 'EA FC 26', art: '/artwork/game-eafc.png' },
+  { name: 'Among Us', art: '/artwork/game-among-us.png' },
+  { name: 'Steam', art: '/artwork/game-steam.png' },
+  { name: 'Discord', art: '/artwork/game-discord.png' },
+  { name: 'Spotify', art: '/artwork/game-spotify.png' },
+  { name: 'Roblox', art: '/artwork/game-roblox.png' },
+  { name: 'Netflix', art: '/artwork/game-netflix.png' },
+];
+
+const BACKGROUND_PRESETS = [
+  { id: 'windows', style: `url(${wallpaper})` },
+  {
+    id: 'nebula',
+    style: 'radial-gradient(ellipse at 68% 38%,rgba(122,43,228,.78),transparent 42%),radial-gradient(ellipse at 22% 82%,rgba(27,67,173,.72),transparent 40%),linear-gradient(135deg,#070c2b,#18134a 58%,#080b22)',
+  },
+  {
+    id: 'midnight',
+    style: 'radial-gradient(ellipse at 72% 34%,rgba(35,103,197,.7),transparent 38%),linear-gradient(135deg,#061127,#102858 56%,#061024)',
+  },
+  {
+    id: 'aurora',
+    style: 'radial-gradient(ellipse at 22% 42%,rgba(40,209,181,.55),transparent 36%),radial-gradient(ellipse at 75% 30%,rgba(105,75,230,.7),transparent 38%),linear-gradient(135deg,#071b35,#0d3150 55%,#08142f)',
+  },
+] as const;
+
+function getSavedGames(): LauncherGame[] {
+  try {
+    const saved = localStorage.getItem('airavoto-custom-games');
+    const parsed: unknown = saved ? JSON.parse(saved) : [];
+    if (
+      Array.isArray(parsed) &&
+      parsed.every(
+        (game: unknown) =>
+          typeof game === 'object' &&
+          game !== null &&
+          'name' in game &&
+          typeof game.name === 'string' &&
+          'art' in game &&
+          typeof game.art === 'string',
+      )
+    ) {
+      return parsed as LauncherGame[];
+    }
+  } catch {
+    // Ignore corrupt optional demo data and start with the built-in library.
+  }
+  return [];
+}
+
 function Home() {
-  const navItems = [
-    { label: 'Home', icon: HomeIcon }, { label: 'Games', icon: Gamepad2 },
-    { label: 'Discover', icon: Compass }, { label: 'Activity', icon: Activity },
-    { label: 'Calendar', icon: CalendarDays }, { label: 'Rewards', icon: Gift },
-    { label: 'Settings', icon: Settings }, { label: 'Support', icon: Headphones },
-    { label: 'Add library', icon: Plus },
-  ];
-  const games = [
-    { name: 'Valorant', art: '/artwork/game-valorant.png' },
-    { name: 'GTA V', art: '/artwork/game-gta.png' },
-    { name: 'Fortnite', art: '/artwork/game-fortnite.png' },
-    { name: 'Minecraft', art: '/artwork/game-minecraft.png' },
-    { name: 'Call of Duty', art: '/artwork/game-cod.png' },
-    { name: 'EA FC 26', art: '/artwork/game-eafc.png' },
-    { name: 'Among Us', art: '/artwork/game-among-us.png' },
-    { name: 'Steam', art: '/artwork/game-steam.png' },
-    { name: 'Discord', art: '/artwork/game-discord.png' },
-    { name: 'Spotify', art: '/artwork/game-spotify.png' },
-    { name: 'Roblox', art: '/artwork/game-roblox.png' },
-    { name: 'Netflix', art: '/artwork/game-netflix.png' },
-  ];
+  const navItems = NAV_ITEMS;
   const features = [
     { label: 'Featured game', title: <>League <span>of</span><br />Legends</>, line: 'Play. Compete. Win.' },
     { label: 'Featured game', title: <>Apex<br />Legends</>, line: 'Drop in. Stand out.' },
     { label: 'Featured game', title: <>Valorant</>, line: 'Precision wins rounds.' },
   ];
-  const [activeNav, setActiveNav] = useState('Home');
+  const [location, setLocation] = useLocation();
   const [query, setQuery] = useState('');
   const [featureIndex, setFeatureIndex] = useState(0);
   const [seconds, setSeconds] = useState(() => Number(localStorage.getItem('airavoto-session-seconds')) || 4997);
@@ -55,7 +106,35 @@ function Home() {
   const [popover, setPopover] = useState('');
   const [notice, setNotice] = useState('');
   const [client, setClient] = useState('PC Client');
+  const [customGames, setCustomGames] = useState<LauncherGame[]>(getSavedGames);
+  const [customWallpaper, setCustomWallpaper] = useState(
+    () => localStorage.getItem('airavoto-custom-wallpaper') || '',
+  );
+  const [backgroundId, setBackgroundId] = useState(() => {
+    const saved = localStorage.getItem('airavoto-background-id');
+    if (
+      saved === 'custom' &&
+      localStorage.getItem('airavoto-custom-wallpaper')
+    ) {
+      return 'custom';
+    }
+    return BACKGROUND_PRESETS.some((preset) => preset.id === saved)
+      ? saved!
+      : 'windows';
+  });
+  const [animationsEnabled, setAnimationsEnabled] = useState(
+    () => localStorage.getItem('airavoto-animations') !== 'false',
+  );
+  const activeNav =
+    navItems.find((item) => item.path === location)?.label ?? 'Home';
+  const isHome = activeNav === 'Home';
+  const games = [...customGames, ...DEFAULT_GAMES];
   const filteredGames = games.filter((game) => game.name.toLowerCase().includes(query.toLowerCase()));
+  const selectedBackground =
+    backgroundId === 'custom' && customWallpaper
+      ? `url("${customWallpaper}")`
+      : BACKGROUND_PRESETS.find((preset) => preset.id === backgroundId)?.style ??
+        `url(${wallpaper})`;
   const time = `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
   useEffect(() => {
@@ -88,9 +167,92 @@ function Home() {
   const togglePopover = (name: string) => setPopover((current) => current === name ? '' : name);
   const cycleFeature = (step: number) => setFeatureIndex((index) => (index + step + features.length) % features.length);
   const currentFeature = features[featureIndex];
+  const handleNavigate = (path: string) => {
+    setLocation(path);
+    setPopover('');
+  };
+  const handleBackgroundChange = (id: string) => {
+    if (
+      id !== 'custom' &&
+      !BACKGROUND_PRESETS.some((preset) => preset.id === id)
+    ) {
+      inform('That background is not available.');
+      return;
+    }
+    if (id === 'custom' && !customWallpaper) {
+      inform('Upload a wallpaper first to use your custom background.');
+      return;
+    }
+    setBackgroundId(id);
+    try {
+      localStorage.setItem('airavoto-background-id', id);
+      inform('Background updated.');
+    } catch {
+      inform('Background updated for this session.');
+    }
+  };
+  const handleWallpaperUpload = (file: File) => {
+    const acceptedTypes = ['image/png', 'image/jpeg', 'image/webp'];
+    if (!acceptedTypes.includes(file.type)) {
+      inform('Choose a PNG, JPG, or WebP image.');
+      return;
+    }
+    if (file.size > 2_500_000) {
+      inform('Choose a wallpaper smaller than 2.5 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== 'string') {
+        inform('This wallpaper could not be read.');
+        return;
+      }
+      setCustomWallpaper(reader.result);
+      setBackgroundId('custom');
+      try {
+        localStorage.setItem('airavoto-custom-wallpaper', reader.result);
+        localStorage.setItem('airavoto-background-id', 'custom');
+        inform('Custom wallpaper applied and saved.');
+      } catch {
+        inform('Custom wallpaper applied for this session.');
+      }
+    };
+    reader.onerror = () => inform('This wallpaper could not be read.');
+    reader.readAsDataURL(file);
+  };
+  const handleAnimationsChange = (enabled: boolean) => {
+    setAnimationsEnabled(enabled);
+    try {
+      localStorage.setItem('airavoto-animations', String(enabled));
+    } catch {
+      inform('Animation preference updated for this session.');
+    }
+  };
+  const handleAddGame = (rawName: string) => {
+    const name = rawName.trim();
+    if (!name) {
+      inform('Enter a game or app name first.');
+      return;
+    }
+    if (games.some((game) => game.name.toLowerCase() === name.toLowerCase())) {
+      inform(`${name} is already in your library.`);
+      return;
+    }
+    const updated = [{ name, art: '' }, ...customGames];
+    setCustomGames(updated);
+    try {
+      localStorage.setItem('airavoto-custom-games', JSON.stringify(updated));
+      inform(`${name} added to your library.`);
+    } catch {
+      inform(`${name} added for this session.`);
+    }
+  };
 
   return (
-    <div className="launcher" style={{ '--wallpaper': `url(${wallpaper})` } as CSSProperties}>
+    <div
+      className={`launcher ${animationsEnabled ? 'motion-on' : 'motion-off'}`}
+      style={{ '--wallpaper': selectedBackground } as CSSProperties}
+    >
       <div className="dashboard">
         <header className="topbar">
           <div className="brand" data-testid="brand-airavoto">
@@ -115,9 +277,10 @@ function Home() {
           </div>
         </header>
         <nav className="sidebar" aria-label="Main navigation">
-          {navItems.map(({ label, icon: Icon }, index) => <button key={label} className={`nav-icon ${activeNav === label ? 'active' : ''}`} title={label} aria-label={label} aria-pressed={activeNav === label} onClick={() => { setActiveNav(label); if (label !== 'Home') inform(`${label} selected`); }} data-testid={`nav-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={17}/></button>)}
+          {navItems.map(({ label, path, icon: Icon }) => <button key={label} className={`nav-icon ${activeNav === label ? 'active' : ''}`} title={label} aria-label={label} aria-pressed={activeNav === label} onClick={() => handleNavigate(path)} data-testid={`nav-${label.toLowerCase().replaceAll(' ', '-')}`}><Icon size={17}/></button>)}
         </nav>
-        <main className="main-grid">
+        <main className={`main-grid ${isHome ? 'is-home' : 'is-secondary'}`}>
+          {isHome ? <>
           <section className="feature glass" aria-label="Featured game">
             <div className="feature-art" />
             <div className="feature-copy">
@@ -157,7 +320,7 @@ function Home() {
           <section className="all-games glass">
               <div className="card-heading"><span><Gamepad2 size={14} color="#d849ff" style={{display:'inline',verticalAlign:'-3px'}}/> All Games</span><button onClick={() => togglePopover('library')} data-testid="button-all-games">See All <ChevronRight size={11} style={{display:'inline',verticalAlign:'-2px'}}/></button></div>
             <div className="game-grid" data-testid="grid-all-games">
-              {filteredGames.length ? filteredGames.map((game) => <button key={game.name} className="game-tile" title={`Open ${game.name}`} onClick={() => inform(`${game.name} selected`)} data-testid={`game-tile-${game.name.toLowerCase().replaceAll(' ','-')}`}><span className="game-symbol" style={{backgroundImage:`url(${game.art})`}} aria-hidden="true"/><span className="game-name">{game.name}</span></button>) : <div className="empty-games" data-testid="empty-game-search">No games match “{query}”</div>}
+              {filteredGames.length ? filteredGames.slice(0, 12).map((game) => <button key={game.name} className="game-tile" title={`Open ${game.name}`} onClick={() => inform(`${game.name} selected`)} data-testid={`game-tile-${game.name.toLowerCase().replaceAll(' ','-')}`}><span className="game-symbol" style={game.art ? { backgroundImage: `url(${game.art})` } : undefined} aria-hidden="true">{!game.art && game.name.slice(0, 1).toUpperCase()}</span><span className="game-name">{game.name}</span></button>) : <div className="empty-games" data-testid="empty-game-search">No games match “{query}”</div>}
             </div>
           </section>
           <section className="popular-card glass">
@@ -188,6 +351,21 @@ function Home() {
             <div><h2>Get 20% OFF</h2><p>on your next session!</p></div>
             <button className="discount-hit" aria-label="View 20 percent session offer" onClick={() => inform('20% session discount · offer details opened')} data-testid="button-discount" />
           </section>
+          </> : <SecondaryPage
+            page={activeNav as LauncherPage}
+            games={games}
+            query={query}
+            onQueryChange={setQuery}
+            onGameSelect={(name) => inform(`${name} selected to play`)}
+            onAddGame={handleAddGame}
+            onAction={inform}
+            backgroundId={backgroundId}
+            onBackgroundChange={handleBackgroundChange}
+            customBackgroundAvailable={Boolean(customWallpaper)}
+            onWallpaperUpload={handleWallpaperUpload}
+            animationsEnabled={animationsEnabled}
+            onAnimationsChange={handleAnimationsChange}
+          />}
         </main>
       </div>
       {popover && <div className="popover" role="dialog" aria-label={`${popover} options`} data-testid={`popover-${popover}`}>
@@ -196,9 +374,19 @@ function Home() {
         {popover === 'profile' && <><h3>Player_007</h3><p>Pro Member · Level 28<br/>Your gaming profile is up to date.</p><button onClick={()=>inform('Profile settings opened')} data-testid="button-profile-settings">Profile settings</button></>}
         {popover === 'notifications' && <><h3>Notifications</h3><p>Weekly activity report is ready.</p><p>Your Pro membership is active.</p><p>New games added to the lounge.</p><button onClick={()=>inform('Notifications marked as read')} data-testid="button-mark-read">Mark all as read</button></>}
         {popover === 'more' && <><h3>Quick access</h3><button onClick={()=>inform('Your achievements are up to date')} data-testid="button-achievements">Achievements</button><button onClick={()=>inform('Friends list opened')} style={{marginLeft:6}} data-testid="button-friends">Friends</button></>}
-        {popover === 'library' && <><h3>All Games</h3><p>12 apps in your library</p><div className="library-list">{games.map((game) => <button key={game.name} onClick={() => inform(`${game.name} selected`)} data-testid={`library-game-${game.name.toLowerCase().replaceAll(' ', '-')}`}>{game.name}</button>)}</div></>}
+        {popover === 'library' && <><h3>All Games</h3><p>{games.length} apps in your library</p><div className="library-list">{games.map((game) => <button key={game.name} onClick={() => inform(`${game.name} selected`)} data-testid={`library-game-${game.name.toLowerCase().replaceAll(' ', '-')}`}>{game.name}</button>)}</div></>}
       </div>}
       {notice && <div className="toast-note" role="status" data-testid="status-feedback">{notice}</div>}
+      {backgroundId !== 'windows' && <div className="system-taskbar" aria-label="Windows taskbar">
+        <div className="taskbar-weather"><strong>29°C</strong><span>Mostly cloudy</span></div>
+        <div className="taskbar-apps">
+          <button aria-label="Open Home" onClick={() => handleNavigate('/')} data-testid="taskbar-home"><HomeIcon size={19}/></button>
+          <button className="taskbar-search" aria-label="Search games" onClick={() => document.querySelector<HTMLInputElement>('[data-testid="input-game-search"]')?.focus()} data-testid="taskbar-search"><Search size={15}/>Search</button>
+          <button aria-label="Open Games" onClick={() => handleNavigate('/games')} data-testid="taskbar-games"><Gamepad2 size={18}/></button>
+          <button aria-label="Open Settings" onClick={() => handleNavigate('/settings')} data-testid="taskbar-settings"><Settings size={18}/></button>
+        </div>
+        <div className="taskbar-status"><span>9:37 PM</span><small>11/14/2026</small></div>
+      </div>}
     </div>
   );
 }
@@ -210,6 +398,9 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={Home} />
+        {NAV_ITEMS.slice(1).map((item) => (
+          <Route key={item.path} path={item.path} component={Home} />
+        ))}
         <Route component={NotFound} />
       </Switch>
     </RoutedErrorBoundary>
