@@ -55,7 +55,6 @@ function Home() {
   const [popover, setPopover] = useState('');
   const [notice, setNotice] = useState('');
   const [client, setClient] = useState('PC Client');
-  const [showAll, setShowAll] = useState(false);
   const filteredGames = games.filter((game) => game.name.toLowerCase().includes(query.toLowerCase()));
   const time = `${String(Math.floor(seconds / 3600)).padStart(2, '0')}:${String(Math.floor((seconds % 3600) / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
 
@@ -73,6 +72,17 @@ function Home() {
     const timeout = window.setTimeout(() => setNotice(''), 2600);
     return () => window.clearTimeout(timeout);
   }, [notice]);
+  useEffect(() => {
+    const handleKeyboard = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        document.querySelector<HTMLInputElement>('[data-testid="input-game-search"]')?.focus();
+      }
+      if (event.key === 'Escape') setPopover('');
+    };
+    window.addEventListener('keydown', handleKeyboard);
+    return () => window.removeEventListener('keydown', handleKeyboard);
+  }, []);
 
   const inform = (message: string) => { setNotice(message); setPopover(''); };
   const togglePopover = (name: string) => setPopover((current) => current === name ? '' : name);
@@ -84,7 +94,7 @@ function Home() {
       <div className="dashboard">
         <header className="topbar">
           <div className="brand" data-testid="brand-airavoto">
-            <div className="brand-mark" aria-hidden="true">A</div>
+            <div className="brand-mark" aria-hidden="true" />
             <div><div className="brand-title">Airavoto</div><div className="brand-sub">Gaming Launcher</div></div>
           </div>
           <label className="searchbox">
@@ -97,7 +107,7 @@ function Home() {
               <Monitor size={17} color="#dc66ff" /><span>{client}<small style={{display:'block',fontSize:8,fontWeight:400}}>Gaming Lounge</small></span><ChevronDown size={12} />
             </button>
             <button className="pill-btn profile-button" onClick={() => togglePopover('profile')} aria-label="Open profile" data-testid="button-profile">
-              <span className="avatar">P</span><span className="profile-name">Player_007<small><Shield size={9} style={{display:'inline',verticalAlign:'-1px'}} /> Pro Member</small></span><ChevronDown size={12} />
+              <span className="avatar" aria-hidden="true" /><span className="profile-name">Player_007<small><Shield size={9} style={{display:'inline',verticalAlign:'-1px'}} /> Pro Member</small></span><ChevronDown size={12} />
             </button>
             <button className="icon-button" aria-label="Notifications" onClick={() => togglePopover('notifications')} data-testid="button-notifications"><Bell size={15}/><span className="badge">3</span></button>
             <button className="icon-button" aria-label="Minimize launcher" onClick={() => inform('Launcher is ready to minimize.')} data-testid="button-minimize"><Menu size={14}/></button>
@@ -145,7 +155,7 @@ function Home() {
             <div className="ad-copy"><div className="ad-title">Advertisement</div><div style={{fontSize:15}}>◉</div><h3>PlayStation 5</h3><p>Next Gen Gaming</p><button className="primary-btn" onClick={() => inform('PlayStation 5 · Learn more')} data-testid="button-learn-more">Learn More <ChevronRight size={10} style={{display:'inline',verticalAlign:'-2px'}}/></button></div>
           </section>
           <section className="all-games glass">
-            <div className="card-heading"><span><Gamepad2 size={14} color="#d849ff" style={{display:'inline',verticalAlign:'-3px'}}/> All Games</span><button onClick={() => { setShowAll((value) => !value); inform(showAll ? 'Showing your library' : 'Your full game library is shown'); }} data-testid="button-all-games">{showAll ? 'Show Less' : 'See All'} <ChevronRight size={11} style={{display:'inline',verticalAlign:'-2px'}}/></button></div>
+              <div className="card-heading"><span><Gamepad2 size={14} color="#d849ff" style={{display:'inline',verticalAlign:'-3px'}}/> All Games</span><button onClick={() => togglePopover('library')} data-testid="button-all-games">See All <ChevronRight size={11} style={{display:'inline',verticalAlign:'-2px'}}/></button></div>
             <div className="game-grid" data-testid="grid-all-games">
               {filteredGames.length ? filteredGames.map((game) => <button key={game.name} className="game-tile" title={`Open ${game.name}`} onClick={() => inform(`${game.name} selected`)} data-testid={`game-tile-${game.name.toLowerCase().replaceAll(' ','-')}`}><span className="game-symbol" style={{backgroundImage:`url(${game.art})`}} aria-hidden="true"/><span className="game-name">{game.name}</span></button>) : <div className="empty-games" data-testid="empty-game-search">No games match “{query}”</div>}
             </div>
@@ -186,6 +196,7 @@ function Home() {
         {popover === 'profile' && <><h3>Player_007</h3><p>Pro Member · Level 28<br/>Your gaming profile is up to date.</p><button onClick={()=>inform('Profile settings opened')} data-testid="button-profile-settings">Profile settings</button></>}
         {popover === 'notifications' && <><h3>Notifications</h3><p>Weekly activity report is ready.</p><p>Your Pro membership is active.</p><p>New games added to the lounge.</p><button onClick={()=>inform('Notifications marked as read')} data-testid="button-mark-read">Mark all as read</button></>}
         {popover === 'more' && <><h3>Quick access</h3><button onClick={()=>inform('Your achievements are up to date')} data-testid="button-achievements">Achievements</button><button onClick={()=>inform('Friends list opened')} style={{marginLeft:6}} data-testid="button-friends">Friends</button></>}
+        {popover === 'library' && <><h3>All Games</h3><p>12 apps in your library</p><div className="library-list">{games.map((game) => <button key={game.name} onClick={() => inform(`${game.name} selected`)} data-testid={`library-game-${game.name.toLowerCase().replaceAll(' ', '-')}`}>{game.name}</button>)}</div></>}
       </div>}
       {notice && <div className="toast-note" role="status" data-testid="status-feedback">{notice}</div>}
     </div>
