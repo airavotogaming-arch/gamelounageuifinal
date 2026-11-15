@@ -130,13 +130,18 @@ function getSavedGames(): LauncherGame[] {
   return [];
 }
 
+type FeatureSlide = {
+  id: string;
+  label: string;
+  title: string;
+  line: string;
+  game?: LauncherGame;
+  action: 'browse' | 'play' | 'none';
+  actionLabel?: string;
+};
+
 function Home() {
   const navItems = NAV_ITEMS;
-  const features = [
-    { label: 'Featured game', title: <>League <span>of</span><br />Legends</>, line: 'Play. Compete. Win.' },
-    { label: 'Featured game', title: <>Apex<br />Legends</>, line: 'Drop in. Stand out.' },
-    { label: 'Featured game', title: <>Valorant</>, line: 'Precision wins rounds.' },
-  ];
   const [location, setLocation] = useLocation();
   const [query, setQuery] = useState('');
   const [featureIndex, setFeatureIndex] = useState(0);
@@ -171,6 +176,25 @@ function Home() {
     navItems.find((item) => item.path === location)?.label ?? 'Home';
   const isHome = activeNav === 'Home';
   const games = [...customGames, ...DEFAULT_GAMES];
+  const features: FeatureSlide[] = [
+    {
+      id: 'welcome',
+      label: 'Welcome to your lounge',
+      title: 'Welcome back,\nPlayer_007',
+      line: 'Your games and next session are ready.',
+      action: 'browse',
+      actionLabel: 'Explore Games',
+    },
+    ...games.slice(0, 2).map((game, index): FeatureSlide => ({
+      id: `game-${game.name.toLowerCase().replaceAll(' ', '-')}`,
+      label: index === 0 ? 'From your library' : 'Ready to play',
+      title: game.name,
+      line: index === 0 ? 'A favorite is ready when you are.' : 'Your next session starts here.',
+      game,
+      action: index === 1 ? 'play' : 'none',
+      ...(index === 1 ? { actionLabel: 'Play Now' } : {}),
+    })),
+  ];
   const filteredGames = games.filter((game) => game.name.toLowerCase().includes(query.toLowerCase()));
   const selectedBackground =
     backgroundId === 'custom' && customWallpaper
@@ -208,10 +232,17 @@ function Home() {
   const inform = (message: string) => { setNotice(message); setPopover(''); };
   const togglePopover = (name: string) => setPopover((current) => current === name ? '' : name);
   const cycleFeature = (step: number) => setFeatureIndex((index) => (index + step + features.length) % features.length);
-  const currentFeature = features[featureIndex];
+  const currentFeature = features[featureIndex] ?? features[0];
   const handleNavigate = (path: string) => {
     setLocation(path);
     setPopover('');
+  };
+  const handleFeatureAction = () => {
+    if (currentFeature.action === 'browse') {
+      handleNavigate('/games');
+    } else if (currentFeature.action === 'play' && currentFeature.game) {
+      inform(`${currentFeature.game.name} selected to play`);
+    }
   };
   const handleBackgroundChange = (id: string) => {
     if (
@@ -356,17 +387,23 @@ function Home() {
         </nav>
         <main className={`main-grid ${isHome ? 'is-home' : 'is-secondary'}`}>
           {isHome ? <>
-          <section className="feature glass" aria-label="Featured game">
-            <div className="feature-art" />
+          <section className="feature glass" aria-label="Welcome and featured games">
+            <div className={`feature-art ${currentFeature.game ? 'feature-art--game' : 'feature-art--welcome'}`} key={currentFeature.id} aria-hidden="true">
+              {currentFeature.game ? (
+                <span className="feature-game-icon" style={currentFeature.game.art ? { backgroundImage: `url("${currentFeature.game.art}")` } : undefined}>
+                  {!currentFeature.game.art && currentFeature.game.name.slice(0, 2).toUpperCase()}
+                </span>
+              ) : <span className="feature-welcome-mark">A</span>}
+            </div>
             <div className="feature-copy">
               <span className="eyebrow" data-testid="text-feature-label">{currentFeature.label}</span>
               <h1 data-testid="text-feature-title">{currentFeature.title}</h1>
               <p>{currentFeature.line}</p>
-              <button className="primary-btn" onClick={() => inform(`${featureIndex === 0 ? 'League of Legends' : featureIndex === 1 ? 'Apex Legends' : 'Valorant'} selected to play`)} data-testid="button-play-now">Play Now <Play size={10} fill="currentColor" style={{display:'inline',marginLeft:4,verticalAlign:'-1px'}}/></button>
+              {currentFeature.actionLabel && <button className="primary-btn feature-action" onClick={handleFeatureAction} data-testid={currentFeature.action === 'play' ? 'button-play-now' : 'button-feature-action'}>{currentFeature.actionLabel} {currentFeature.action === 'play' ? <Play size={10} fill="currentColor" style={{display:'inline',marginLeft:4,verticalAlign:'-1px'}}/> : <ChevronRight size={11} style={{display:'inline',marginLeft:4,verticalAlign:'-2px'}}/>}</button>}
             </div>
-            <button className="carousel-control prev" onClick={() => cycleFeature(-1)} aria-label="Previous featured game" data-testid="button-feature-previous"><ChevronLeft size={17}/></button>
-            <button className="carousel-control next" onClick={() => cycleFeature(1)} aria-label="Next featured game" data-testid="button-feature-next"><ChevronRight size={17}/></button>
-            <div className="dots" aria-label="Featured game pagination">{features.map((feature, index) => <button key={feature.line} className={`dot ${index === featureIndex ? 'on' : ''}`} aria-label={`Show featured game ${index + 1}`} aria-current={index === featureIndex} onClick={() => setFeatureIndex(index)} data-testid={`button-feature-dot-${index + 1}`} />)}</div>
+            <button className="carousel-control prev" onClick={() => cycleFeature(-1)} aria-label="Previous featured slide" data-testid="button-feature-previous"><ChevronLeft size={17}/></button>
+            <button className="carousel-control next" onClick={() => cycleFeature(1)} aria-label="Next featured slide" data-testid="button-feature-next"><ChevronRight size={17}/></button>
+            <div className="dots" aria-label="Featured slide pagination">{features.map((feature, index) => <button key={feature.id} className={`dot ${index === featureIndex ? 'on' : ''}`} aria-label={`Show featured slide ${index + 1}`} aria-current={index === featureIndex} onClick={() => setFeatureIndex(index)} data-testid={`button-feature-dot-${index + 1}`} />)}</div>
           </section>
           <section className="session glass" aria-label="Current session">
             <Clock3 className="tiny-clock" size={15}/>

@@ -88,14 +88,22 @@ button { color: inherit; }
 .motion-off *, .motion-off *::before, .motion-off *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
 .glass { border:1px solid rgba(225,239,255,.33); border-radius:17px; background:linear-gradient(135deg,rgba(31,55,111,.84),rgba(25,37,86,.83)); box-shadow:0 8px 22px rgba(12,34,79,.32),inset 0 1px 10px rgba(205,224,255,.17); backdrop-filter:blur(9px); }
 .feature { grid-column:1 / 4; width:95%; top:-.35vh;height:calc(100% + 1.2vh); position:relative; overflow:hidden; display:flex; align-items:center; isolation:isolate; padding:3.5% 5%; }
-.feature-art {position:absolute;inset:0;z-index:-1;background-image:url('/artwork/league-art.png');background-size:auto 100%;background-position:right 22px center;background-repeat:no-repeat;opacity:.98;mask-image:linear-gradient(90deg,transparent 10%,black 30%);}
+.feature-art {position:absolute;inset:0;z-index:-1;overflow:hidden;opacity:.98;background:radial-gradient(ellipse at 78% 54%,rgba(126,66,197,.44),transparent 37%),radial-gradient(ellipse at 57% 110%,rgba(25,99,185,.55),transparent 54%),linear-gradient(115deg,rgba(12,18,57,.22),rgba(21,24,68,.04))}
+.feature-art::before{content:"";position:absolute;right:8%;top:50%;width:clamp(130px,20vw,240px);aspect-ratio:1;border:1px solid #cba8ff45;border-radius:50%;transform:translateY(-50%) rotate(-26deg) scaleX(.58);box-shadow:0 0 34px #9850d526}
+.feature-art--game{background:radial-gradient(ellipse at 79% 52%,rgba(145,82,213,.43),transparent 35%),radial-gradient(ellipse at 56% 108%,rgba(30,105,191,.5),transparent 53%),linear-gradient(115deg,rgba(12,18,57,.2),rgba(21,24,68,.03))}
+.feature-art--welcome{background:radial-gradient(ellipse at 77% 54%,rgba(97,50,177,.36),transparent 39%),radial-gradient(ellipse at 55% 110%,rgba(26,116,202,.54),transparent 54%),linear-gradient(115deg,rgba(12,18,57,.16),rgba(21,24,68,.02))}
+.feature-game-icon{position:absolute;right:15%;top:50%;width:clamp(76px,10vw,128px);aspect-ratio:1;display:block;transform:translateY(-50%);border:1px solid #e1c0ff79;border-radius:23px;background-color:#293d77;background-position:center;background-repeat:no-repeat;background-size:74% 74%;box-shadow:0 15px 36px #080d2f72,inset 0 1px 12px #e9e0ff26;animation:feature-pop .36s cubic-bezier(.2,.7,.25,1) both}
+.feature-game-icon:not([style]){display:grid;place-items:center;background-image:linear-gradient(145deg,#8848bd,#27528c);color:#f7e7ff;font-size:clamp(22px,3vw,36px);font-weight:800}
+.feature-welcome-mark{position:absolute;right:15%;top:50%;width:clamp(90px,13vw,160px);aspect-ratio:1;display:grid;place-items:center;transform:translateY(-50%);border:1px solid #d5a6ff73;border-radius:50%;color:#f6e2ff;background:radial-gradient(circle at 35% 27%,#d997ff45,transparent 50%),linear-gradient(145deg,#59459a8c,#173f78a8);box-shadow:inset 0 0 30px #bb6fff2b,0 0 38px #4b53bd40;font-size:clamp(30px,4vw,48px);font-weight:800;letter-spacing:-4px;text-shadow:0 0 22px #da8aff99;animation:feature-pop .36s cubic-bezier(.2,.7,.25,1) both}
+.feature-copy { max-width:48%; position:relative; z-index:1; }
 .feature::after {content:"";position:absolute;inset:0;z-index:-1;background:linear-gradient(90deg,rgba(12,18,57,.95) 0%,rgba(16,23,66,.84) 33%,rgba(21,24,68,.03) 77%);}
-.feature-copy { max-width:43%; z-index:1; }
 .eyebrow { display:inline-block; padding:3px 9px; border-radius:12px; background:#921fe5c9; font-size:9px; text-transform:uppercase; letter-spacing:.7px; margin-bottom:7px; }
-.feature h1 { margin:0; font-size:clamp(19px,2.25vw,29px); line-height:.94; letter-spacing:-.7px; font-weight:800; text-transform:uppercase; text-shadow:0 2px 9px #11183b; }
+.feature h1 { margin:0; font-size:clamp(19px,2.25vw,29px); line-height:.94; letter-spacing:-.7px; font-weight:800; text-transform:uppercase; text-shadow:0 2px 9px #11183b; white-space:pre-line; }
 .feature h1 span {font-size:.66em}
 .feature p {font-size:11px; margin:8px 0 9px; color:#f1e8ff;}
 .primary-btn {border:0;border-radius:22px;background:linear-gradient(100deg,#9b21e6,#6723d1);padding:7px 15px;box-shadow:0 3px 10px #5417b86b; font-size:10px;font-weight:700;cursor:pointer;}
+.feature-action{position:relative;z-index:1}
+@keyframes feature-pop{from{opacity:0;transform:translateY(-46%) scale(.94)}to{opacity:1;transform:translateY(-50%) scale(1)}}
 .carousel-control {position:absolute;top:46%;width:27px;height:27px;border:1px solid #ffffff4d;background:#192c63aa;border-radius:50%;display:grid;place-items:center;cursor:pointer;z-index:2;}
 .carousel-control.prev{left:8px}.carousel-control.next{right:10px}
 .dots {position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:6px}
@@ -189,7 +197,7 @@ button:focus-visible,input:focus-visible{outline:2px solid #e9a9ff;outline-offse
   .sidebar{order:1;margin:0;flex-direction:row;justify-content:space-around;padding:5px;border-radius:16px;gap:0}
  .nav-spacer{display:none}.nav-icon{width:32px;height:32px}
   .main-grid{order:2;display:flex;flex-direction:column;gap:10px;margin-right:0}
-  .feature{min-height:205px;width:100%;top:0;height:auto}.session{min-height:100px;height:auto;align-self:stretch}.ad-card{min-height:110px;height:auto;margin:0;align-self:stretch}
+   .feature{min-height:205px;width:100%;top:0;height:auto}.feature-copy{max-width:59%}.feature-game-icon{right:9%;width:76px;border-radius:16px}.feature-welcome-mark{right:8%;width:88px}.session{min-height:100px;height:auto;align-self:stretch}.ad-card{min-height:110px;height:auto;margin:0;align-self:stretch}
   .week-card,.stats-card{min-height:112px;top:0;height:auto;width:100%}.perform-card{min-height:110px;top:0;height:auto}.all-games{min-height:180px;top:0;height:auto;width:100%}.game-grid{grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(4,1fr)}
   .popular-card{top:0;height:auto;width:100%}.food-card{min-height:110px;top:0;height:auto;width:100%}.quick-actions{min-height:68px;flex-wrap:wrap;width:100%}.discount{min-height:82px;width:100%}
   .main-grid.is-secondary{overflow:visible;padding:0}
