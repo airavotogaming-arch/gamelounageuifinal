@@ -1,12 +1,15 @@
 import { useMemo, useRef, useState, type ChangeEvent, type FormEvent } from 'react';
 import {
   Activity, ArrowDownToLine, ArrowUpRight, CalendarDays, Check, ChevronRight,
-  Clock3, Gamepad2, Gift, Headphones, ImagePlus, MapPin, MessageCircle,
-  Search, Settings2, Sparkles, Star, Trophy, Upload, Zap
+  Clock3, Gamepad2, ImagePlus, MapPin, Search, Settings2, Sparkles, Trophy,
+  Upload
 } from 'lucide-react';
+import SupportChatPanel, {
+  type SupportChatMessage,
+} from './SupportChatPanel';
 import './secondary-page.css';
 
-export type LauncherPage = 'Games' | 'Discover' | 'Activity' | 'Calendar' | 'Rewards' | 'Settings' | 'Support' | 'Add library';
+export type LauncherPage = 'Games' | 'Discover' | 'Activity' | 'Calendar' | 'Settings' | 'Support Chat' | 'Add library';
 export type LauncherGame = { name: string; art: string };
 
 type SecondaryPageProps = {
@@ -17,6 +20,9 @@ type SecondaryPageProps = {
   onGameSelect: (name: string) => void;
   onAddGame: (name: string) => void;
   onAction: (message: string) => void;
+  supportMessages: SupportChatMessage[];
+  onSupportMessage: (text: string) => void;
+  onClearSupportChat: () => void;
   backgroundId: string;
   onBackgroundChange: (id: string) => void;
   customBackgroundAvailable: boolean;
@@ -32,12 +38,6 @@ const backgrounds = [
   { id: 'aurora', name: 'Aurora Flow', detail: 'Northern light · teal glow', swatch: 'aurora' },
 ];
 
-const helpTopics = [
-  { title: 'Getting started', detail: 'Set up your player profile and first session.', icon: Zap },
-  { title: 'Lounge PC & games', detail: 'Find a title, station, or performance setting.', icon: Gamepad2 },
-  { title: 'Bookings & rewards', detail: 'Manage a reservation or check your points.', icon: Gift },
-];
-
 const sessions = [
   { day: 'TODAY', date: '14', month: 'NOV', title: 'Ranked duo night', time: '7:30 PM – 9:30 PM', place: 'Squad room · Station 04', accent: 'violet' },
   { day: 'FRI', date: '20', month: 'NOV', title: 'Community tournament', time: '6:00 PM – 8:00 PM', place: 'Main arena · 16 seats', accent: 'cyan' },
@@ -47,12 +47,12 @@ const safeId = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, '-'
 
 export function SecondaryPage({
   page, games, query, onQueryChange, onGameSelect, onAddGame, onAction,
+  supportMessages, onSupportMessage, onClearSupportChat,
   backgroundId, onBackgroundChange, customBackgroundAvailable, onWallpaperUpload,
   animationsEnabled, onAnimationsChange,
 }: SecondaryPageProps) {
   const [newTitle, setNewTitle] = useState('');
   const [bookedSessions, setBookedSessions] = useState<string[]>([]);
-  const [selectedHelp, setSelectedHelp] = useState('');
   const wallpaperInput = useRef<HTMLInputElement>(null);
   const filteredGames = useMemo(
     () => games.filter((game) => game.name.toLowerCase().includes(query.trim().toLowerCase())),
@@ -83,9 +83,8 @@ export function SecondaryPage({
     Discover: { eyebrow: 'LOUNGE PULSE', title: 'Find your next', description: 'What players are loading into right now.' },
     Activity: { eyebrow: 'YOUR RECENT RUN', title: 'Play with purpose', description: 'A clear view of your time, rhythm, and recent wins.' },
     Calendar: { eyebrow: 'MAKE A PLAN', title: 'Good games ahead', description: 'Reserve a spot and give your next session a date.' },
-    Rewards: { eyebrow: 'PLAYER PERKS', title: 'Earn your next', description: 'Your play adds up. Here’s what’s within reach.' },
     Settings: { eyebrow: 'MAKE IT YOURS', title: 'Set the scene', description: 'Choose a backdrop and tune the launcher to your pace.' },
-    Support: { eyebrow: 'WE’RE HERE', title: 'A hand when needed', description: 'Quick answers for the moments between matches.' },
+    'Support Chat': { eyebrow: 'LOCAL DEMO INBOX', title: 'Support Chat', description: 'Write to the lounge admin in this browser-only demo.' },
     'Add library': { eyebrow: 'GROW YOUR LIBRARY', title: 'Bring a game in', description: 'Add a title to your local collection.' },
   };
   const copy = pageCopy[page];
@@ -191,17 +190,6 @@ export function SecondaryPage({
         </div>
       )}
 
-      {page === 'Rewards' && (
-        <div className="sp-page-content sp-rewards-layout">
-          <section className="sp-panel sp-reward-balance"><div className="sp-reward-glow" /><div className="sp-reward-balance-copy"><span className="sp-kicker"><Trophy size={13} /> YOUR PLAYER WALLET</span><span className="sp-points-label">AVAILABLE POINTS</span><div className="sp-points">2,480<span> pts</span></div><span className="sp-points-note"><span /> 320 points until your next reward</span><div className="sp-progress-track"><i /></div><button type="button" className="sp-button-light" onClick={() => onAction('Points breakdown · 2,480 available, 320 to your next reward.')} data-testid="button-rewards-breakdown">How points add up <ChevronRight size={14} /></button></div><div className="sp-reward-emblem" aria-hidden="true"><span>AV</span><i /><i /><i /></div><span className="sp-balance-footer">PLAYER_007 <b>·</b> MEMBER SINCE 2024</span></section>
-          <div className="sp-offers-column"><div className="sp-section-head"><div><span className="sp-kicker">GOOD THINGS, EARNED</span><h2>Offers for you</h2></div><span className="sp-offer-count">02 AVAILABLE</span></div>
-            <article className="sp-panel sp-offer-card"><div className="sp-offer-icon"><Clock3 size={19} /></div><div className="sp-offer-content"><span className="sp-offer-type">SESSION PERK <span>· EXPIRES IN 6 DAYS</span></span><h3>A longer run, on us.</h3><p>Take 20% off your next 2-hour lounge booking.</p><div className="sp-offer-cost"><Gift size={13} /> 1,200 points <span>·</span> Available now</div></div><button type="button" className="sp-button-primary" onClick={() => onAction('20% off a 2-hour lounge booking · offer details saved for your next visit.')} data-testid="button-claim-session-offer">View offer <ArrowUpRight size={14} /></button></article>
-            <article className="sp-panel sp-offer-card"><div className="sp-offer-icon offer-cyan"><Star size={19} /></div><div className="sp-offer-content"><span className="sp-offer-type">LOUNGE EXTRA <span>· ALWAYS AVAILABLE</span></span><h3>Something for the squad.</h3><p>Redeem a shareable snack credit for your next group session.</p><div className="sp-offer-cost"><Gift size={13} /> 2,800 points <span>·</span> 320 points to go</div></div><button type="button" className="sp-button-quiet" onClick={() => onAction('Squad snack credit · you need 320 more points to unlock this offer.')} data-testid="button-view-squad-offer">320 pts away <ArrowUpRight size={14} /></button></article>
-            <button type="button" className="sp-reward-note" onClick={() => onAction('Earn points every time you play at the lounge.')} data-testid="button-reward-earn"><Sparkles size={14} /> Keep playing to unlock more <span>How it works <ChevronRight size={13} /></span></button>
-          </div>
-        </div>
-      )}
-
       {page === 'Settings' && (
         <div className="sp-page-content sp-settings-layout">
           <section className="sp-panel sp-settings-wallpaper">
@@ -217,14 +205,13 @@ export function SecondaryPage({
         </div>
       )}
 
-      {page === 'Support' && (
-        <div className="sp-page-content sp-support-layout">
-          <section className="sp-panel sp-support-intro"><div className="sp-support-icon"><Headphones size={22} /></div><span className="sp-kicker">LOUNGE HELP DESK</span><h2>Let’s get you<br /><em>back in the game.</em></h2><p>Choose a topic for a quick answer, or reach out to the team at the lounge.</p><div className="sp-support-open"><span className="sp-live-dot" /> Usually here during lounge hours</div><span className="sp-support-watermark">AV</span></section>
-          <div className="sp-support-topics">
-            <span className="sp-kicker">QUICK ANSWERS</span>
-            {helpTopics.map(({ title, detail, icon: Icon }) => <button type="button" key={title} className={`sp-panel sp-help-topic${selectedHelp === title ? ' is-open' : ''}`} aria-expanded={selectedHelp === title} onClick={() => setSelectedHelp((current) => current === title ? '' : title)} data-testid={`button-help-${safeId(title)}`}><span className="sp-help-icon"><Icon size={17} /></span><span className="sp-help-copy"><strong>{title}</strong><small>{selectedHelp === title ? `${detail} Ask the lounge desk if you need a hand.` : detail}</small></span><ChevronRight size={16} /></button>)}
-            <div className="sp-contact-card"><div><span className="sp-kicker">NEED A REAL PERSON?</span><strong>The lounge team can help.</strong><span>Tell us what’s up and we’ll point you in the right direction.</span></div><button type="button" className="sp-button-primary" onClick={() => onAction('Contact the lounge team at the front desk for one-to-one help.')} data-testid="button-contact-support"><MessageCircle size={14} /> Contact the lounge</button></div>
-          </div>
+      {page === 'Support Chat' && (
+        <div className="sp-page-content sp-chat-page">
+          <SupportChatPanel
+            messages={supportMessages}
+            onSend={onSupportMessage}
+            onClear={onClearSupportChat}
+          />
         </div>
       )}
 

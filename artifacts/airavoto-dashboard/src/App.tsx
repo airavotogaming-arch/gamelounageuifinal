@@ -6,9 +6,9 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import NotFound from '@/pages/not-found';
 import {
   Activity, Bell, CalendarDays, ChevronDown, ChevronLeft, ChevronRight,
-  Clock3, Coffee, Compass, Gamepad2, Gift, Headphones,
+  Clock3, Coffee, Compass, Gamepad2,
   Home as HomeIcon, Menu, Monitor, Pause, Play, Plus, Search, Settings, Shield,
-  ShoppingBag, Sparkles, TrendingUp, Trophy, X
+  MessageCircle, ShoppingBag, Sparkles, TrendingUp, Trophy, X
 } from 'lucide-react';
 import {
   Route,
@@ -21,6 +21,7 @@ import SecondaryPage, {
   type LauncherGame,
   type LauncherPage,
 } from '@/components/launcher/SecondaryPage';
+import type { SupportChatMessage } from '@/components/launcher/SupportChatPanel';
 
 const queryClient = new QueryClient();
 
@@ -30,11 +31,49 @@ const NAV_ITEMS = [
   { label: 'Discover', path: '/discover', icon: Compass },
   { label: 'Activity', path: '/activity', icon: Activity },
   { label: 'Calendar', path: '/calendar', icon: CalendarDays },
-  { label: 'Rewards', path: '/rewards', icon: Gift },
   { label: 'Settings', path: '/settings', icon: Settings },
-  { label: 'Support', path: '/support', icon: Headphones },
+  { label: 'Support Chat', path: '/support-chat', icon: MessageCircle },
   { label: 'Add library', path: '/add-library', icon: Plus },
 ] as const;
+
+const SUPPORT_CHAT_STORAGE_KEY = 'airavoto-support-chat';
+
+function createSupportGreeting(): SupportChatMessage {
+  return {
+    id: 'admin-welcome',
+    sender: 'admin',
+    text: 'Hi! Tell us what you need help with. This is a local demo, so messages are not sent to a real admin.',
+    sentAt: new Date().toISOString(),
+  };
+}
+
+function getSavedSupportMessages(): SupportChatMessage[] {
+  try {
+    const saved = localStorage.getItem(SUPPORT_CHAT_STORAGE_KEY);
+    const parsed: unknown = saved ? JSON.parse(saved) : [];
+    if (
+      Array.isArray(parsed) &&
+      parsed.every(
+        (message: unknown) =>
+          typeof message === 'object' &&
+          message !== null &&
+          'id' in message &&
+          typeof message.id === 'string' &&
+          'sender' in message &&
+          (message.sender === 'admin' || message.sender === 'player') &&
+          'text' in message &&
+          typeof message.text === 'string' &&
+          'sentAt' in message &&
+          typeof message.sentAt === 'string',
+      )
+    ) {
+      return parsed.length ? (parsed as SupportChatMessage[]) : [createSupportGreeting()];
+    }
+  } catch {
+    // Ignore corrupt optional demo data and start a fresh local conversation.
+  }
+  return [createSupportGreeting()];
+}
 
 const DEFAULT_GAMES: LauncherGame[] = [
   { name: 'Valorant', art: '/artwork/game-valorant.png' },
@@ -107,6 +146,9 @@ function Home() {
   const [notice, setNotice] = useState('');
   const [client, setClient] = useState('PC Client');
   const [customGames, setCustomGames] = useState<LauncherGame[]>(getSavedGames);
+  const [supportMessages, setSupportMessages] = useState<SupportChatMessage[]>(
+    getSavedSupportMessages,
+  );
   const [customWallpaper, setCustomWallpaper] = useState(
     () => localStorage.getItem('airavoto-custom-wallpaper') || '',
   );
@@ -228,6 +270,39 @@ function Home() {
       inform('Animation preference updated for this session.');
     }
   };
+  const handleSupportMessage = (rawText: string) => {
+    const text = rawText.trim().slice(0, 1000);
+    if (!text) {
+      inform('Write a message before sending.');
+      return;
+    }
+    const updated = [
+      ...supportMessages,
+      {
+        id: `${Date.now()}-${supportMessages.length}`,
+        sender: 'player' as const,
+        text,
+        sentAt: new Date().toISOString(),
+      },
+    ].slice(-100);
+    setSupportMessages(updated);
+    try {
+      localStorage.setItem(SUPPORT_CHAT_STORAGE_KEY, JSON.stringify(updated));
+      inform('Message saved in this browser demo; it was not sent to an admin.');
+    } catch {
+      inform('Message added for this session, but browser storage is full.');
+    }
+  };
+  const handleClearSupportChat = () => {
+    const freshThread = [createSupportGreeting()];
+    setSupportMessages(freshThread);
+    try {
+      localStorage.setItem(SUPPORT_CHAT_STORAGE_KEY, JSON.stringify(freshThread));
+      inform('Local chat history cleared.');
+    } catch {
+      inform('Local chat cleared for this session.');
+    }
+  };
   const handleAddGame = (rawName: string) => {
     const name = rawName.trim();
     if (!name) {
@@ -344,7 +419,7 @@ function Home() {
             <button className="quick-btn" onClick={() => inform('Food ordering is ready')} data-testid="button-quick-order"><ShoppingBag size={17} color="#f2b548"/>Order Food</button>
             <button className="quick-btn" onClick={() => inform('PC booking · choose your preferred station')} data-testid="button-book-pc"><Monitor size={17}/>Book PC</button>
             <button className="quick-btn" onClick={() => inform('Your stats · 66% win rate · 3.15 K/D')} data-testid="button-quick-stats"><Activity size={17}/>View Stats</button>
-            <button className="quick-btn" onClick={() => inform('Support is available at the gaming lounge desk')} data-testid="button-support"><Headphones size={17}/>Support</button>
+            <button className="quick-btn" title="Open Support Chat" aria-label="Open Support Chat" onClick={() => handleNavigate('/support-chat')} data-testid="button-support"><MessageCircle size={17}/>Chat</button>
             <button className="quick-btn" onClick={() => togglePopover('more')} data-testid="button-quick-more">More <ChevronRight size={14}/></button>
           </section>
           <section className="discount glass">
@@ -359,6 +434,9 @@ function Home() {
             onGameSelect={(name) => inform(`${name} selected to play`)}
             onAddGame={handleAddGame}
             onAction={inform}
+            supportMessages={supportMessages}
+            onSupportMessage={handleSupportMessage}
+            onClearSupportChat={handleClearSupportChat}
             backgroundId={backgroundId}
             onBackgroundChange={handleBackgroundChange}
             customBackgroundAvailable={Boolean(customWallpaper)}
