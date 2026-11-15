@@ -476,6 +476,7 @@ function Router() {
     <RoutedErrorBoundary>
       <Switch>
         <Route path="/" component={Home} />
+        <Route path="/support" component={LegacySupportRedirect} />
         {NAV_ITEMS.slice(1).map((item) => (
           <Route key={item.path} path={item.path} component={Home} />
         ))}
@@ -483,6 +484,14 @@ function Router() {
       </Switch>
     </RoutedErrorBoundary>
   );
+}
+
+function LegacySupportRedirect() {
+  const [, navigate] = useLocation();
+  useEffect(() => {
+    navigate('/support-chat', { replace: true });
+  }, [navigate]);
+  return null;
 }
 
 function RoutedErrorBoundary({ children }: { children: ReactNode }) {
